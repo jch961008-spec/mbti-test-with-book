@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>나는 어떤 주인공과 닮았을까? - 그림책 MBTI</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts for warm picture-book aesthetic -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Gowun Dodum"', '"Noto Sans KR"', 'sans-serif'],
+            hand: ['"Gaegu"', 'cursive'],
+          },
+          colors: {
+            book: {
+              cream: '#FAF6ED',
+              card: '#FFFFFF',
+              paper: '#F4ECE1',
+              border: '#E3D3BA',
+              brown: '#433431',
+              point: '#E76245',
+              subpoint: '#F49342',
+              green: '#457B52',
+              blue: '#3A6B88',
+              yellow: '#F7BC38'
+            }
+          },
+          boxShadow: {
+            'book': '0 10px 25px -5px rgba(67, 52, 49, 0.08), 0 8px 10px -6px rgba(67, 52, 49, 0.05)',
+            'paper': '0 4px 20px rgba(78, 64, 53, 0.08)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      /* 기본 참조 이미지 경로 */
+      --ref-img: url('1791879924031.png');
+    }
+    body {
+      background-color: #FAF6ED;
+      color: #3B2E2A;
+      background-image: radial-gradient(#DECBB2 0.85px, transparent 0.85px);
+      background-size: 22px 22px;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background-color: #D6C2A6;
+      border-radius: 9999px;
+    }
+
+    /* 순수 CSS 스프라이트 분할 (캔버스 미사용 - 보안 오류 완전 방지) */
+    .char-sprite {
+      background-image: var(--ref-img);
+      background-repeat: no-repeat;
+      background-size: 420% 430%;
+      background-color: #FFFDF8;
+      transition: transform 0.2s ease;
+    }
+
+    /* 16개 캐릭터 정밀 분할 위치 (X%, Y%) */
+    /* 1행: 분석형 (INTJ, INTP, ENTJ, ENTP) */
+    .sprite-INTJ { background-position: 5% 5%; }
+    .sprite-INTP { background-position: 36% 4.5%; }
+    .sprite-ENTJ { background-position: 68% 4.5%; }
+    .sprite-ENTP { background-position: 98% 4.5%; }
+
+    /* 2행: 외교형 (INFJ, INFP, ENFJ, ENFP) */
+    .sprite-INFJ { background-position: 5% 36.5%; }
+    .sprite-INFP { background-position: 36% 36.5%; }
+    .sprite-ENFJ { background-position: 68% 36.5%; }
+    .sprite-ENFP { background-position: 98% 36.5%; }
+
+    /* 3행: 관리자형 (ISTJ, ISFJ, ESTJ, ESFJ) */
+    .sprite-ISTJ { background-position: 5% 68.5%; }
+    .sprite-ISFJ { background-position: 36% 68.5%; }
+    .sprite-ESTJ { background-position: 68% 68.5%; }
+    .sprite-ESFJ { background-position: 98% 68.5%; }
+
+    /* 4행: 탐험가형 (ISTP, ISFP, ESTP, ESFP) */
+    .sprite-ISTP { background-position: 5% 98%; }
+    .sprite-ISFP { background-position: 36% 98%; }
+    .sprite-ESTP { background-position: 68% 98%; }
+    .sprite-ESFP { background-position: 98% 98%; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between font-sans selection:bg-amber-200 selection:text-amber-900">
+
+  <!-- Top Navigation Header -->
+  <header class="w-full max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between border-b border-book-border/60">
+    <button onclick="navigateView('home')" class="flex items-center gap-2.5 text-left group transition">
+      <span class="text-2xl">📚</span>
+      <div>
+        <h1 class="text-base md:text-lg font-black text-book-brown tracking-tight group-hover:text-book-point transition">
+          나는 어떤 주인공과 닮았을까?
+        </h1>
+        <p class="text-[11px] text-stone-500">그림책 주인공으로 알아보는 MBTI 유형</p>
+      </div>
+    </button>
+
+    <div class="flex items-center gap-2">
+      <!-- 사진 첨부/교체 버튼 (경로 문제로 안 뜰 때 즉시 로드) -->
+      <label class="text-xs px-3 py-1.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-bold cursor-pointer transition flex items-center gap-1.5 shadow-sm active:scale-95" title="사진이 안 뜰 경우 '1791879924031.png' 사진 파일을 선택해주세요">
+        <span>📷</span>
+        <span id="btn-upload-text">사진 넣기</span>
+        <input type="file" id="image-file-input" accept="image/*" class="hidden" onchange="handleUserImageUpload(event)">
+      </label>
+      <!-- 웹 이미지 URL 입력 버튼 (호스팅된 이미지 주소 등록 시 자동 분할) -->
+      <button onclick="promptImageUrl()" class="text-xs px-3 py-1.5 rounded-full bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95" title="Imgur, GitHub 등에 올린 이미지 URL을 넣으면 모든 사용자에게 자동으로 뜹니다">
+        <span>🌐</span>
+        <span>이미지 링크(URL)</span>
+      </button>
+      <button onclick="navigateView('all')" class="text-xs md:text-sm px-3.5 py-1.5 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold transition flex items-center gap-1.5 border border-amber-200">
+        <span>📖</span>
+        <span>16가지 도감</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="w-full max-w-4xl mx-auto px-4 py-6 flex-1 flex flex-col justify-center">
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-stone-900/90 text-white px-5 py-2.5 rounded-full shadow-2xl text-xs md:text-sm transition-all duration-300 opacity-0 pointer-events-none transform -translate-y-3 font-medium">
+      알림 메시지
+    </div>
+
+    <!-- ==============================================
+         1 PAGE: 소개 페이지
+         - 제목 (상호작용 X)
+         - 그림 (배경 및 캐릭터 분할 쇼케이스)
+         - 간결한 3개 버튼 인터페이스: 검사 시작, 검사 결과 확인, 다른 유형 확인하기
+         ============================================== -->
+    <section id="view-home" class="view-section flex flex-col items-center text-center py-2 md:py-4">
+      
+      <!-- Photo Sliced Characters Showcase (CSS Sprite 기반) -->
+      <div class="relative w-full max-w-lg mb-6 rounded-3xl p-5 md:p-6 bg-gradient-to-b from-amber-50 to-orange-50/40 border-2 border-book-border shadow-paper overflow-hidden">
+        <div class="absolute -top-12 -right-12 w-36 h-36 bg-amber-200/40 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-orange-200/30 rounded-full blur-xl pointer-events-none"></div>
+        
+        <!-- 4 Character Previews sliced straight from the photo -->
+        <div class="grid grid-cols-4 gap-2 md:gap-3 mb-3">
+          <div class="bg-white p-2 rounded-2xl shadow-sm border border-book-border/60 flex flex-col items-center">
+            <div class="w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border border-amber-200/80 bg-stone-100 flex items-center justify-center">
+              <div class="char-sprite sprite-INTJ w-full h-full"></div>
+            </div>
+            <span class="text-[11px] font-bold text-stone-700 mt-1.5">INTJ 두더지</span>
+          </div>
+
+          <div class="bg-white p-2 rounded-2xl shadow-sm border border-book-border/60 flex flex-col items-center">
+            <div class="w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border border-amber-200/80 bg-stone-100 flex items-center justify-center">
+              <div class="char-sprite sprite-ENFP w-full h-full"></div>
+            </div>
+            <span class="text-[11px] font-bold text-stone-700 mt-1.5">ENFP 빨간망토</span>
+          </div>
+
+          <div class="bg-white p-2 rounded-2xl shadow-sm border border-book-border/60 flex flex-col items-center">
+            <div class="w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border border-amber-200/80 bg-stone-100 flex items-center justify-center">
+              <div class="char-sprite sprite-ESFJ w-full h-full"></div>
+            </div>
+            <span class="text-[11px] font-bold text-stone-700 mt-1.5">ESFJ 곰씨</span>
+          </div>
+
+          <div class="bg-white p-2 rounded-2xl shadow-sm border border-book-border/60 flex flex-col items-center">
+            <div class="w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border border-amber-200/80 bg-stone-100 flex items-center justify-center">
+              <div class="char-sprite sprite-ISTP w-full h-full"></div>
+            </div>
+            <span class="text-[11px] font-bold text-stone-700 mt-1.5">ISTP 애너벨</span>
+          </div>
+        </div>
+
+        <!-- 사진 미로드 알림 안내 바 -->
+        <div id="image-status-bar" class="inline-flex flex-col sm:flex-row items-center gap-2 bg-white/95 px-4 py-2 rounded-2xl border border-book-border text-xs text-amber-900 font-bold shadow-sm">
+          <span>✨ 사진 파일을 선택하시거나, 웹에 올린 [이미지 링크]를 입력하면 16개 캐릭터가 즉시 분할됩니다.</span>
+          <button onclick="promptImageUrl()" class="text-[11px] underline text-book-point hover:text-orange-700">링크 바로 등록하기</button>
+        </div>
+      </div>
+
+      <!-- App Title Block (상호작용 X) -->
+      <div class="mb-7 select-none">
+        <span class="inline-block bg-orange-100 text-book-point text-xs md:text-sm font-black px-3.5 py-1 rounded-full mb-2">
+          그림책 주인공으로 알아보는 MBTI 유형
+        </span>
+        <h2 class="text-3xl md:text-4xl font-black text-book-brown tracking-tight mb-2.5">
+          [나는 어떤 주인공과 닮았을까?]
+        </h2>
+        <p class="text-stone-600 text-sm md:text-base max-w-md mx-auto leading-relaxed">
+          책장을 넘기다 마주친 다정하고 솔직한 이야기 속 인물들.<br>
+          머리에 똥이 떨어진 두더지부터 묵묵한 등대지기까지,<br class="hidden sm:inline">
+          내 마음의 결을 쏙 빼닮은 주인공을 찾아보세요!
+        </p>
+      </div>
+
+      <!-- 간결한 3개 버튼 인터페이스 -->
+      <div class="w-full max-w-sm flex flex-col gap-3">
+        <!-- 1. 검사 시작 -->
+        <button onclick="startTest()" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-book-point to-orange-500 hover:from-orange-600 hover:to-orange-700 text-white font-black text-base md:text-lg shadow-book transition duration-200 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 active:scale-95">
+          <span>🌱</span>
+          <span>검사 시작</span>
+        </button>
+
+        <!-- 2. 검사 결과 확인 -->
+        <button onclick="checkResultView()" class="w-full py-3.5 px-6 rounded-2xl bg-white hover:bg-stone-50 text-stone-800 border-2 border-stone-200 hover:border-amber-400 font-bold text-sm md:text-base shadow-sm transition duration-200 flex items-center justify-center gap-2 active:scale-95">
+          <span>🔍</span>
+          <span>검사 결과 확인</span>
+        </button>
+
+        <!-- 3. 다른 유형 확인하기 -->
+        <button onclick="navigateView('all')" class="w-full py-3.5 px-6 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold text-sm md:text-base transition duration-200 flex items-center justify-center gap-2 active:scale-95">
+          <span>📚</span>
+          <span>다른 유형 확인하기</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==============================================
+         2 PAGE (A): 검사 문항 화면 (그림책 상황별 12문항)
+         ============================================== -->
+    <section id="view-test" class="view-section hidden flex flex-col items-center">
+      <!-- Progress Bar -->
+      <div class="w-full max-w-xl mb-5">
+        <div class="flex justify-between items-center text-xs font-bold text-stone-500 mb-2">
+          <span id="test-progress-text">문항 1 / 12</span>
+          <span id="test-progress-percent" class="text-book-point font-black">8%</span>
+        </div>
+        <div class="w-full h-3 bg-stone-200/80 rounded-full overflow-hidden p-0.5">
+          <div id="test-progress-bar" class="h-full bg-gradient-to-r from-amber-400 to-book-point rounded-full transition-all duration-300 w-[8%]"></div>
+        </div>
+      </div>
+
+      <!-- Question Card -->
+      <div class="w-full max-w-xl bg-white rounded-3xl p-6 md:p-8 border border-book-border shadow-paper flex flex-col items-center text-center">
+        <span id="q-category-tag" class="text-xs font-bold px-3 py-1 bg-amber-100 text-amber-900 rounded-full mb-3">
+          초간단 MBTI 테스트: 그림책에 물을 쏟았을 때의 대처법
+        </span>
+        
+        <h3 id="q-question-title" class="text-lg md:text-2xl font-black text-book-brown mb-6 leading-snug min-h-[58px] flex items-center justify-center">
+          그림책을 읽다가 실수로 물을 와르르 쏟았다면?
+        </h3>
+
+        <!-- Options Container -->
+        <div class="w-full flex flex-col gap-3.5" id="q-options-container">
+          <!-- Dynamically inserted choice buttons -->
+        </div>
+
+        <!-- Controls -->
+        <div class="mt-6 flex justify-between w-full pt-4 border-t border-stone-100 text-xs text-stone-400">
+          <button id="btn-prev-question" onclick="prevQuestion()" class="hover:text-stone-700 transition flex items-center gap-1 font-bold disabled:opacity-30 disabled:pointer-events-none">
+            ← 이전 문항
+          </button>
+          <button onclick="navigateView('home')" class="hover:text-rose-500 transition font-medium">
+            처음 홈으로 나가기
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================
+         2 PAGE (B): 검사 결과 확인 뷰 (사진 분할 캐릭터 그림 & 상세 설명)
+         ============================================== -->
+    <section id="view-result" class="view-section hidden flex flex-col items-center">
+      <div class="w-full max-w-2xl bg-white rounded-3xl border-2 border-book-border shadow-paper overflow-hidden">
+        
+        <!-- Header Banner -->
+        <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white p-6 md:p-8 text-center relative">
+          <span id="res-badge-group" class="inline-block bg-white/20 backdrop-blur-md px-3.5 py-1 rounded-full text-xs font-bold tracking-wider mb-2">
+            분석형 (NT)
+          </span>
+          <p class="text-xs md:text-sm font-hand text-amber-100 text-lg">나와 마음의 결이 통하는 그림책 주인공은?</p>
+          <h2 id="res-char-name" class="text-2xl md:text-4xl font-black mt-1">
+            원두철미한 두더지
+          </h2>
+          <div class="inline-flex items-center gap-2 mt-3 bg-white text-stone-800 font-black px-4 py-1.5 rounded-full shadow-sm text-sm md:text-base">
+            <span id="res-mbti-type" class="text-book-point font-black">INTJ</span>
+            <span class="text-stone-300">|</span>
+            <span id="res-char-title">철저한 분석 전략가</span>
+          </div>
+        </div>
+
+        <!-- Character Photo Crop & Book Details -->
+        <div class="p-6 md:p-8 space-y-6">
+          <div class="flex flex-col sm:flex-row items-center gap-6 bg-book-cream p-5 rounded-2xl border border-book-border">
+            
+            <!-- 사진에서 분할된 실제 캐릭터 그림 (CSS Sprite) -->
+            <div class="w-36 h-36 md:w-40 md:h-40 rounded-2xl bg-white p-1 border-2 border-amber-300 shadow-sm shrink-0 overflow-hidden">
+              <div id="res-char-sprite" class="char-sprite w-full h-full rounded-xl"></div>
+            </div>
+
+            <div class="text-center sm:text-left flex-1">
+              <span class="text-[11px] text-amber-800 font-bold bg-amber-100 px-2.5 py-0.5 rounded-md inline-block mb-1">
+                원작 그림책 정보
+              </span>
+              <h4 id="res-book-title" class="font-bold text-book-brown text-base md:text-lg">
+                《누가 내 머리에 똥 쌌어?》
+              </h4>
+              <p id="res-book-author" class="text-xs text-stone-500 mb-2">
+                베르너 홀츠바르트 글 / 볼프 에를브루흐 그림 (사계절)
+              </p>
+              <p id="res-quote" class="text-xs md:text-sm font-hand font-bold text-book-point bg-white p-3 rounded-xl border border-book-border italic">
+                “누가 내 머리에 똥 쌌어?! 치밀하게 조사해서 원인을 찾아내고 말겠어!”
+              </p>
+            </div>
+          </div>
+
+          <!-- Description Section -->
+          <div>
+            <h4 class="text-sm font-bold text-book-brown flex items-center gap-2 mb-2">
+              <span class="w-2 h-4 bg-book-point rounded-full"></span>
+              주인공 성향 및 성격 분석
+            </h4>
+            <div id="res-description" class="text-sm md:text-base text-stone-700 leading-relaxed space-y-2 bg-stone-50 p-4 rounded-2xl border border-stone-200">
+              <!-- Inserted text -->
+            </div>
+          </div>
+
+          <!-- Keywords Tags -->
+          <div>
+            <h4 class="text-sm font-bold text-book-brown flex items-center gap-2 mb-2">
+              <span class="w-2 h-4 bg-amber-500 rounded-full"></span>
+              대표 성향 키워드
+            </h4>
+            <div id="res-tags" class="flex flex-wrap gap-2">
+              <!-- Inserted tags -->
+            </div>
+          </div>
+
+          <!-- Best Match Partner -->
+          <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-14 h-14 bg-white rounded-xl border border-amber-200 p-0.5 shrink-0 overflow-hidden">
+                <div id="res-match-sprite" class="char-sprite w-full h-full rounded-lg"></div>
+              </div>
+              <div>
+                <p class="text-xs text-amber-800 font-bold">환상의 찰떡 짝꿍 주인공</p>
+                <p id="res-match-text" class="text-sm font-bold text-stone-800">ENTP (호기심 대마왕 통이와 옥이)</p>
+              </div>
+            </div>
+            <button onclick="showMatchDetail()" class="text-xs font-bold text-amber-700 underline hover:text-amber-900">
+              짝꿍 정보 보기
+            </button>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="pt-2 flex flex-col sm:flex-row gap-2.5">
+            <button onclick="shareResult()" class="flex-1 py-3 px-4 rounded-xl bg-book-brown hover:bg-stone-800 text-white font-bold text-sm transition flex items-center justify-center gap-2">
+              <span>📋</span>
+              <span>결과 복사하기</span>
+            </button>
+            <button onclick="startTest()" class="flex-1 py-3 px-4 rounded-xl bg-orange-100 hover:bg-orange-200 text-book-point font-bold text-sm transition flex items-center justify-center gap-2">
+              <span>🔄</span>
+              <span>다시 검사하기</span>
+            </button>
+            <button onclick="navigateView('all')" class="flex-1 py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-sm transition flex items-center justify-center gap-2">
+              <span>📖</span>
+              <span>전체 16가지 도감</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================================
+         2 PAGE (C): 다른 유형 확인하기 (16가지 사진 분할 도감)
+         ============================================== -->
+    <section id="view-all" class="view-section hidden flex flex-col items-center">
+      <div class="w-full mb-6 text-center">
+        <h2 class="text-2xl md:text-3xl font-black text-book-brown mb-2">16가지 그림책 주인공 도감</h2>
+        <p class="text-xs md:text-sm text-stone-600">책 속에 수록된 16가지 주인공들의 원작 사진 속 캐릭터를 확인해보세요.</p>
+        
+        <!-- Filter Tabs -->
+        <div class="flex flex-wrap justify-center gap-2 mt-4">
+          <button onclick="filterGroup('ALL')" class="group-tab active px-4 py-1.5 rounded-full text-xs md:text-sm font-bold transition bg-stone-800 text-white" data-group="ALL">
+            전체 (16)
+          </button>
+          <button onclick="filterGroup('분석형')" class="group-tab px-4 py-1.5 rounded-full text-xs md:text-sm font-bold transition bg-white text-stone-600 border border-stone-200 hover:bg-stone-50" data-group="분석형">
+            🧠 분석형 (NT)
+          </button>
+          <button onclick="filterGroup('외교형')" class="group-tab px-4 py-1.5 rounded-full text-xs md:text-sm font-bold transition bg-white text-stone-600 border border-stone-200 hover:bg-stone-50" data-group="외교형">
+            🌿 외교형 (NF)
+          </button>
+          <button onclick="filterGroup('관리자형')" class="group-tab px-4 py-1.5 rounded-full text-xs md:text-sm font-bold transition bg-white text-stone-600 border border-stone-200 hover:bg-stone-50" data-group="관리자형">
+            🛡️ 관리자형 (SJ)
+          </button>
+          <button onclick="filterGroup('탐험가형')" class="group-tab px-4 py-1.5 rounded-full text-xs md:text-sm font-bold transition bg-white text-stone-600 border border-stone-200 hover:bg-stone-50" data-group="탐험가형">
+            🎨 탐험가형 (SP)
+          </button>
+        </div>
+      </div>
+
+      <!-- Character Card Grid (16 Cards using sliced photos) -->
+      <div id="character-grid" class="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pb-8">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal for Character Details -->
+  <div id="char-modal" class="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto custom-scroll border border-stone-200 shadow-2xl p-6 relative">
+      <button onclick="closeModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 font-bold flex items-center justify-center transition">
+        ✕
+      </button>
+
+      <div class="text-center pt-2 pb-4 border-b border-stone-100 flex flex-col items-center">
+        <span id="modal-group" class="text-xs font-bold px-3 py-1 bg-amber-100 text-amber-900 rounded-full">
+          분석형
+        </span>
+        <!-- 모달 속 캐릭터 사진 (스프라이트 분할) -->
+        <div class="w-32 h-32 my-3 bg-white p-1 rounded-2xl border-2 border-amber-200 shadow-sm overflow-hidden">
+          <div id="modal-sprite" class="char-sprite w-full h-full rounded-xl"></div>
+        </div>
+        <h3 id="modal-name" class="text-2xl font-black text-book-brown">원두철미한 두더지</h3>
+        <p class="text-xs text-stone-400 mt-0.5">
+          <span id="modal-mbti" class="font-bold text-book-point text-sm">INTJ</span> · 
+          <span id="modal-role">철저한 분석 전략가</span>
+        </p>
+      </div>
+
+      <div class="py-4 space-y-4 text-left">
+        <div class="bg-book-cream p-4 rounded-2xl border border-book-border">
+          <p class="text-xs font-bold text-amber-800">원작 도서</p>
+          <p id="modal-book" class="text-sm font-bold text-stone-800">《누가 내 머리에 똥 쌌어?》</p>
+          <p id="modal-author" class="text-xs text-stone-500">베르너 홀츠바르트 글 / 볼프 에를브루흐 그림</p>
+          <p id="modal-quote" class="text-xs font-hand text-book-point font-bold mt-2 bg-white p-2.5 rounded-lg border border-amber-100 italic"></p>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold text-stone-500 mb-1">인물 해설</h4>
+          <p id="modal-desc" class="text-sm text-stone-700 leading-relaxed bg-stone-50 p-3 rounded-xl border border-stone-200"></p>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold text-stone-500 mb-1.5">대표 성향 키워드</h4>
+          <div id="modal-tags" class="flex flex-wrap gap-1.5"></div>
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="closeModal()" class="w-full py-2.5 rounded-xl bg-stone-800 text-white font-bold text-sm hover:bg-stone-900 transition">
+          닫기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="w-full py-4 text-center text-xs text-stone-400 border-t border-book-border/50">
+    <p>《그림책 속 인물들의 MBTI》 테마 심리테스트 · 동화 같은 일상을 위한 마음 여행</p>
+  </footer>
+
+  <script>
+    /* 16 Picture Book Characters Database (책의 인물 해설 및 대사 완벽 반영) */
+    const CHARACTERS = {
+      // 1. 분석형 (NT)
+      "INTJ": {
+        group: "분석형",
+        groupEng: "NT",
+        name: "원두철미한 두더지",
+        role: "철저한 분석 전략가",
+        book: "《누가 내 머리에 똥 쌌어?》",
+        author: "베르너 홀츠바르트 글 / 볼프 에를브루흐 그림 (사계절)",
+        quote: "누가 내 머리에 똥 쌌어?! 치밀하게 조사해서 원인을 찾아내고 말겠어!",
+        summary: "옳은 태도로 세운 계획을 향해 돌진해 나가는 모습은 《누가 내 머리에 똥 쌌어?》의 두더지와 꼭 닮았습니다. 머리에 똥을 싼 범인을 찾기 위해 온갖 동물들을 찾아다니며 과학적인 똥 수색에 여념이 없는 작은 두더지! 비록 다리에 똥이 튀고 냄새에 코를 쥐면서도 결국 파리의 감식을 받아 범인을 밝혀내는 확고한 집념과 논리적 인과의 대명사입니다.",
+        tags: ["철저한 계획", "원인 규명", "냉철한 집념", "논리적 인과", "단호한 결단"],
+        partner: "ENTP"
+      },
+      "INTP": {
+        group: "분석형",
+        groupEng: "NT",
+        name: "사색가 아이",
+        role: "엉뚱하고 기발한 지식 탐구자",
+        book: "《줄줄이 꿴 호랑이》",
+        author: "권문희 글·그림 (사계절)",
+        quote: "그저 놀고먹는 게 아니란 말이요. 머릿속에서는 온 세상 지혜가 샘솟고 있다고요!",
+        summary: "아랫목에서 밥 먹고 윗목에서 똥 싸고, 또 윗목에서 밥 먹고 아랫목에서 똥 싸는 게으른 아이에게 뭐라고 하지 마세요. 그 아이는 사색 중입니다. 기발한 참깨 농사와 동아줄 전략으로 수많은 호랑이를 엮어 집안을 일으킨 주인공처럼, 겉보기엔 멍때리는 듯해도 머릿속에선 끝없는 지적 호기심과 혁신적인 아이디어가 소용돌이치고 있습니다.",
+        tags: ["사색과 사유", "독창적 발상", "느긋한 천재성", "지적 호기심", "창의적 꾀"],
+        partner: "ENTJ"
+      },
+      "ENTJ": {
+        group: "분석형",
+        groupEng: "NT",
+        name: "타자기 치는 리더 젖소",
+        role: "대담한 혁신 협상가",
+        book: "《탁탁 톡톡 음매 - 젖소가 편지를 쓴대요》",
+        author: "도린 크로닌 글 / 베시 루윈 그림 (주니어PHK)",
+        quote: "전기 담요를 주지 않으면 우유는 없습니다. 타협은 정확한 조건 아래서만 가능합니다!",
+        summary: "전략적인 생각과 결정력, 냉철한 판단력을 갖춘 카리스마 리더입니다. 헛간의 추위를 해결하기 위해 우연히 발견한 타자기로 농장주에게 단호하게 편지를 보내며, 닭들의 난방 요구까지 한데 모아 파업을 이끕니다. 원하는 것이 있다면 주저 없이 주도권을 쥐고 명확한 협상으로 시스템을 바꾸는 혁신가입니다.",
+        tags: ["탁월한 추진력", "전략적 협상", "목표 달성", "카리스마 리더", "공동체 혁신"],
+        partner: "INTP"
+      },
+      "ENTP": {
+        group: "분석형",
+        groupEng: "NT",
+        name: "호기심 대마왕 통이와 옥이",
+        role: "재기발랄한 유쾌한 모험가",
+        book: "《소중한 하루》",
+        author: "윤태규 글·그림",
+        quote: "오, 재밌겠다! 두목이야, 같이 범인 찾으러 당장 가자!",
+        summary: "정해진 법칙은 없습니다. 뭐가 됐든 성취가 우리의 목적이라 외치는 이들은 《소중한 하루》의 통이와 옥이를 쏙 뺐습니다. 단골 떡볶이 가게가 문을 닫자 실의에 빠지는 대신 온 동네를 누비며 '맛의 원인'을 찾기 위해 유쾌한 모험을 시작합니다. 쌀떡이냐 밀떡이냐로 밤새 열띤 논쟁을 벌여도 피곤하지 않은 활력 만점의 탐험가입니다.",
+        tags: ["끝없는 호기심", "유쾌한 모험", "위트와 기발함", "재치 있는 화법", "임기응변"],
+        partner: "INTJ"
+      },
+
+      // 2. 외교형 (NF)
+      "INFJ": {
+        group: "외교형",
+        groupEng: "NF",
+        name: "온정의 베이커 브레드씨",
+        role: "세상을 품는 따뜻한 소망가",
+        book: "《두근두근》",
+        author: "이석구 글·그림 (고래이야기)",
+        quote: "잠겨 있던 빗장이 풀리는 순간, 온 세상에 따스한 빵 냄새가 번져갈 거예요.",
+        summary: "서로 돕는 세상을 꿈꾸는 따뜻한 성격의 소유자입니다. 낯을 가리면서도 자신의 집에 찾아오는 동물들에게 맛있는 빵을 만들어 주는 《두근두근》의 브레드씨! 추위에 오들오들 떠는 이들에게는 호빵을, 위로가 필요한 이들에게는 소보로빵을 건네며 타인의 마음을 세심하게 보듬어주는 온정의 통찰자입니다.",
+        tags: ["깊은 공감", "조용한 헌신", "섬세한 배려", "마음의 등불", "이타적 신념"],
+        partner: "ENFP"
+      },
+      "INFP": {
+        group: "외교형",
+        groupEng: "NF",
+        name: "낭만주의자 웨슬리",
+        role: "자기만의 세계를 일구는 몽상가",
+        book: "《웨슬리나라》",
+        author: "폴 플라이쉬만 글 / 케빈 호크스 그림 (비룡소)",
+        quote: "남들과 똑같지 않아도 괜찮아. 내 정원 속엔 오직 나만의 언어와 문명이 자라나고 있어.",
+        summary: "이보다 더 창의적일 순 없습니다. 세상의 기준에 억지로 맞추기보다, 자신만의 작물을 키우고 옷을 만들고 상형문자 언어까지 만들어 낸 낭만의 개척자입니다. 때로는 남들의 오해를 사기도 하지만, 순수한 열정과 상상력으로 자신만의 아름다운 소우주를 꽃피워내는 진정한 예술가입니다.",
+        tags: ["나만의 문명", "풍부한 감수성", "낭만과 이상", "독창적 가치관", "순수한 영혼"],
+        partner: "ENFJ"
+      },
+      "ENFJ": {
+        group: "외교형",
+        groupEng: "NF",
+        name: "마음먹은 일은 해내는 소피아",
+        role: "선한 영향력의 리더",
+        book: "《정치가 소피아의 놀라운 도전》",
+        author: "안드레아 비티 글 / 데이비드 로버츠 그림 (천개의바람)",
+        quote: "모두를 위한 따뜻한 변화를 만드는 법! 발 벗고 나서서 진심을 다하면 통해요.",
+        summary: "모두를 위해 옳은 일을 위해 용기 있게 목소리를 내는 리더입니다. 넘치는 카리스마와 따뜻한 친화력으로 사람들을 하나로 모으고, 쓰레기 더미를 아름다운 마을 공원으로 바꾸어 내는 기적을 만들어냅니다. 정의롭고 선한 세상에 대한 확신으로 주변 사람들에게 영감을 불어넣는 든든한 조력자입니다.",
+        tags: ["선한 리더십", "공동체 화합", "열정적 실천", "사람 중심", "따뜻한 용기"],
+        partner: "INFP"
+      },
+      "ENFP": {
+        group: "외교형",
+        groupEng: "NF",
+        name: "용감한 빨간 망토 소녀",
+        role: "생명력 넘치는 자유로운 탐험가",
+        book: "《세상에서 가장 용감한 소녀》",
+        author: "매튜 코델 글·그림 (비룡소)",
+        quote: "삶이라는 모험 앞에 주저할 게 뭐가 있어? 아기 늑대를 구하러 눈보라를 뚫고 갈 거야!",
+        summary: "추운 겨울, 깊은 산속에서 길 잃은 새끼 늑대를 만난다면? 결코 그냥 지나치지 못하는 사랑과 정의의 소녀입니다. 무서움 앞에서도 생명에 대한 연민 하나로 눈보라 속을 달리는 용기! 반짝거리는 꿈과 열정으로 어두운 숲마저 따스한 우정으로 물들이는 자유롭고 순수한 모험가입니다.",
+        tags: ["무한한 긍정", "순수한 용기", "생명 존중", "자유로운 영혼", "따스한 에너지"],
+        partner: "INFJ"
+      },
+
+      // 3. 관리자형 (SJ)
+      "ISTJ": {
+        group: "관리자형",
+        groupEng: "SJ",
+        name: "성실한 등대지기",
+        role: "묵묵히 세상을 밝히는 성실파",
+        book: "《안녕, 나의 등대》",
+        author: "소피 블랙올 글·그림 (비룡소)",
+        quote: "비바람이 몰아쳐도 나의 등대 불빛은 한순간도 꺼지지 않아야 합니다.",
+        summary: "등대의 렌즈를 닦고 석유를 가득 채우며, 밤이 되면 업무 일지에 매일의 바다를 꼼꼼히 기록하는 성실의 표상입니다. 자기 시간과 에너지를 허투루 쓰지 않고, 신중하고 정확하게 임무를 수행합니다. 눈이 오나 비가 오나 배들이 길을 잃지 않게 제자리를 묵묵히 지켜내는 든든한 버팀목입니다.",
+        tags: ["투철한 책임감", "원칙과 규칙", "신중과 성실", "믿음직한 존재", "완벽한 마무리"],
+        partner: "ESFP"
+      },
+      "ISFJ": {
+        group: "관리자형",
+        groupEng: "SJ",
+        name: "다정한 동행자 블레로 할머니",
+        role: "가장 든든한 헌신적 수호자",
+        book: "《산으로 오르는 길》",
+        author: "마리안느 뒤비크 글·그림 (고래뱃속)",
+        quote: "그 길, 내가 함께 걸어 줄게. 천천히 걸어도 괜찮단다.",
+        summary: "매주 일요일 산길을 걸으며 이웃을 위해 버섯을 따고, 어려움에 처한 어린 친구에게 다정하게 손길을 건네는 따뜻한 오소리 할머니입니다. 조용하지만 헌신적인 사랑으로 누군가의 걸음에 발을 맞추어 주며, 일상이 흔들릴 때 변함없이 곁을 지켜주는 든든한 안식처 같은 존재입니다.",
+        tags: ["따뜻한 배려", "묵묵한 동행", "섬세한 돌봄", "한결같은 마음", "평온한 안식처"],
+        partner: "ESTP"
+      },
+      "ESTJ": {
+        group: "관리자형",
+        groupEng: "SJ",
+        name: "거침없이 밀고 나가는 막두 할머니",
+        role: "원칙과 활력의 뚝심 대장",
+        book: "《막두》",
+        author: "정원선 글·그림 (이야기꽃)",
+        quote: "내 장사란 절한다! 당당하게 살아야 제맛이지. 머뭇거릴 틈이 어디 있어!",
+        summary: "풍파 많은 자갈치 시장 바닥에서도 꿋꿋하게 60년을 살아온 강인한 생활력의 할머니입니다. 당당하게 활보하며 질서와 규율을 세우고, 가족과 터전을 지키기 위해 거침없이 현실을 돌파해 나갑니다. 겉은 조금 무뚝뚝해 보여도 속정 깊고 어떤 위기에서도 중심을 잃지 않는 카리스마 관리자입니다.",
+        tags: ["거침없는 실행", "단단한 뚝심", "체계와 규율", "강인한 생활력", "확고한 결단"],
+        partner: "ISFP"
+      },
+      "ESFJ": {
+        group: "관리자형",
+        groupEng: "SJ",
+        name: "양보와 화합의 곰씨",
+        role: "모두를 챙기는 친절한 중재자",
+        book: "《곰씨의 의자》",
+        author: "노인경 글·그림 (문학동네)",
+        quote: "이거 내 의자인데... 그래도 다들 행복해하니 조금만 더 양보해볼까?",
+        summary: "지쳐 보이는 토끼에게 자신의 소중한 의자 한 켠을 내어주고, 찾아오는 친구들을 환대하는 따뜻한 친화력의 소유자입니다. 때로는 남을 배려하느라 자신의 자리가 좁아져 속앓이를 하기도 하지만, 주변 사람들의 미소와 평화를 위해서라면 기꺼이 자신의 온기를 나누어 주는 정 많은 천사입니다.",
+        tags: ["친절과 환대", "화합 추구", "풍부한 배려", "정 많고 다정함", "분위기 메이커"],
+        partner: "ISTP"
+      },
+
+      // 4. 탐험가형 (SP)
+      "ISTP": {
+        group: "탐험가형",
+        groupEng: "SP",
+        name: "털실의 장인 애너벨",
+        role: "담담하고 손재주 좋은 해결사",
+        book: "《애너벨과 신기한 털실》",
+        author: "맥 바넷 글 / 존 클라센 그림 (길벗어린이)",
+        quote: "털실과 코바늘만 있다면 흑백 세상도 얼마든지 따뜻하게 바꿀 수 있어.",
+        summary: "흑백 세상의 차가운 마을에서 마르지 않는 털실을 발견하고 묵묵히 온 마을과 동물들에게 따뜻한 옷을 떠주는 소녀입니다. 욕심 많은 귀족이 마법 상자를 빼앗아가도 당황하지 않고 덤덤히 일상을 유지하는 쿨함! 도구 다루기에 능숙하고 불필요한 말보다 실질적인 행동으로 증명하는 손재주 장인입니다.",
+        tags: ["침착한 대처", "뛰어난 솜씨", "군더더기 없는 행동", "담담한 여유", "장인 정신"],
+        partner: "ESFJ"
+      },
+      "ISFP": {
+        group: "탐험가형",
+        groupEng: "SP",
+        name: "호기심 많은 예술가 리디아",
+        role: "일상을 꽃피우는 감성 정원사",
+        book: "《리디아의 정원》",
+        author: "사라 스튜어트 글 / 데이비드 스몰 그림 (시공주니어)",
+        quote: "작은 씨앗 하나와 꽃 한 송이로도 메마른 옥상을 행복한 낙원으로 만들 수 있어요.",
+        summary: "어려운 형편 때문에 무뚝뚝한 외삼촌네 빵집에 맡겨졌지만, 결코 기죽지 않고 잿빛 옥상에 비밀 꽃밭을 가꾸어낸 사랑스러운 예술가입니다. 주변의 자연과 식물, 아름다운 색채를 오롯이 사랑하며, 순수한 열정으로 주변 사람들의 마음속에 아름다운 미소를 피워내는 온화한 감성파입니다.",
+        tags: ["따스한 감성", "자연 친화", "온화한 예술성", "소박한 행복", "마음을 녹이는 미소"],
+        partner: "ESTJ"
+      },
+      "ESTP": {
+        group: "탐험가형",
+        groupEng: "SP",
+        name: "초긍정 낙천파 괜찮아 아저씨",
+        role: "쿨하고 재치 넘치는 모험가",
+        book: "《괜찮아 아저씨》",
+        author: "김경희 글·그림 (비룡소)",
+        quote: "머리카락이 빠져도 괜찮아! 어차피 열 가닥뿐이었는데 뭐, 시원하고 좋잖아!",
+        summary: "소중한 머리카락이 하나씩 빠져나가는 절망적인 상황에서도 활짝 웃으며 새로운 헤어스타일과 해결책을 즐기는 초특급 긍정주의자입니다. 위기 상황에서도 당황하지 않고 상황을 유쾌하게 전환하며, 현재의 즐거움에 집중하여 주변에 웃음 바이러스를 퍼뜨리는 활력 넘치는 인물입니다.",
+        tags: ["초긍정 마인드", "위기 탈출", "재치와 유머", "순발력 대장", "현재를 즐기자"],
+        partner: "ISFJ"
+      },
+      "ESFP": {
+        group: "탐험가형",
+        groupEng: "SP",
+        name: "우당탕탕 개구쟁이 야옹이",
+        role: "에너지 폭발 자유 영혼",
+        book: "《우당탕탕 야옹이》 시리즈",
+        author: "구도 노리코 글·그림 (책읽는곰)",
+        quote: "의무나 책임 따위 개나 줘 버려! 일단 재밌는 거 먼저 저지르고 보는 거야, 야옹~!",
+        summary: "궁금한 건 못 참아! 맛있는 빵 냄새를 맡으면 빵집에 숨어들고, 기차가 보이면 기차를 몰아봐야 직성이 풀리는 천방지축 장난꾸러기입니다. 비록 사고를 치고 나중에 무릎 꿇고 반성할지언정, 살아 숨 쉬는 매 순간을 온몸으로 즐기는 에너지 만렙의 사랑스러운 개구쟁이들입니다.",
+        tags: ["넘치는 끼", "순간의 몰입", "유쾌한 장난", "호기심 폭발", "사랑스러운 활력"],
+        partner: "ISTJ"
+      }
+    };
+
+    /* 079p 질문을 핵심으로 한 12개 검사 문항 */
+    const QUESTIONS = [
+      {
+        axis: "EI",
+        tag: "📖 그림책에 물을 쏟았을 때의 대처",
+        title: "소중하게 읽던 그림책에 실수로 물을 와르르 쏟아버렸다면 나의 첫 반응은?",
+        options: [
+          { text: "“어떡해! 야, 빨리 휴지 좀 가져다줘!” 말이 많아지며 주변 사람들에게 즉시 상황을 알린다.", val: "E" },
+          { text: "순간 머릿속이 복잡해지며 ‘어디부터 말려야 하지? 책이 울면 어쩌지?’ 생각이 많아진다.", val: "I" }
+        ]
+      },
+      {
+        axis: "SN",
+        tag: "📚 책을 말리는 아이디어",
+        title: "젖어버린 책을 복구하려고 할 때 머릿속에 가장 먼저 떠오르는 생각은?",
+        options: [
+          { text: "“저번에 책 젖었을 때 어떻게 했더라? 마른 수건 대고 눌러봐야지.” 현실 경험을 떠올린다.", val: "S" },
+          { text: "“다음엔 아예 날개 달린 특수 방수 그림책을 구해야지!” 기발한 상상의 나래를 펼친다.", val: "N" }
+        ]
+      },
+      {
+        axis: "TF",
+        tag: "💡 수습 대책 vs 감정 반응",
+        title: "소중한 그림책이 젖어 속상한 순간, 내 마음에 먼저 와닿는 것은?",
+        options: [
+          { text: "“드라이기로 말리는 게 빠를까, 냉동실에 얼려 말리는 게 종이가 안 울까?” 방법과 인과 분석!", val: "T" },
+          { text: "“이 책... 작가님 친필 사인본인데 눈물 주르륵...” 가슴 아픈 감정이 먼저 북받친다.", val: "F" }
+        ]
+      },
+      {
+        axis: "JP",
+        tag: "📦 사후 정리 방식",
+        title: "젖은 책을 일단 책상 위에 두고 난 뒤 취할 행동은?",
+        options: [
+          { text: "“책을 다시 주문하자. 마침 적립금도 있으니 바로 결제하고 일정 확인!” 확실하게 정리", val: "J" },
+          { text: "“일단 말려 보지 뭐~ 어떻게든 자연 건조되겠지!” 상황에 맞춰 유연하게 대처", val: "P" }
+        ]
+      },
+      {
+        axis: "EI",
+        tag: "🥐 휴일을 보내는 법",
+        title: "향긋한 빵 냄새가 솔솔 풍기는 주말 오후, 당신이 더 끌리는 시간은?",
+        options: [
+          { text: "동네 친구들과 동물들을 모두 초대해 북적북적 다과회를 열고 신나게 수다 떨기!", val: "E" },
+          { text: "창가 햇살 아래서 소파에 포근히 기대어 혼자 조용히 그림책 읽기!", val: "I" }
+        ]
+      },
+      {
+        axis: "SN",
+        tag: "🌱 나만의 정원 꾸미기",
+        title: "마당에 작은 텃밭을 일구게 되었다면 어떤 정원을 만들고 싶나요?",
+        options: [
+          { text: "토마토, 상추처럼 지금 당장 잘 자라고 식탁에 올릴 수 있는 실용적인 텃밭!", val: "S" },
+          { text: "세상에 없던 환상의 식물과 상형문자를 새긴 돌을 놓은 나만의 신비로운 문명 왕국!", val: "N" }
+        ]
+      },
+      {
+        axis: "TF",
+        tag: "🕵️ 억울한 일 생겼을 때",
+        title: "두더지처럼 머리에 똥이 떨어진 황당하고 억울한 일을 당했다면?",
+        options: [
+          { text: "“누가 언제 어떤 각도에서 떨어뜨렸는지 증거와 목격자를 찾아 인과관계를 규명한다!”", val: "T" },
+          { text: "“누군지는 몰라도 내 기분이 얼마나 상했는지, 나한테 먼저 진심으로 사과해야 해!”", val: "F" }
+        ]
+      },
+      {
+        axis: "JP",
+        tag: "⏰ 매일의 일과 운영",
+        title: "외딴섬에서 등대지기로 한 달을 살아야 한다면 나의 하루는?",
+        options: [
+          { text: "기상, 점검, 청소, 일지 작성까지 시간표대로 착착 지켜야 마음이 편안하다.", val: "J" },
+          { text: "그날그날 날씨와 기분에 맞춰 바다를 바라보다가 내킬 때 렌즈를 닦는다.", val: "P" }
+        ]
+      },
+      {
+        axis: "EI",
+        tag: "🗺️ 새로운 마을 방문",
+        title: "동화 속 미지의 마을에 발을 디뎠을 때 당신의 자연스러운 행동은?",
+        options: [
+          { text: "광장으로 달려가 지나가는 주민들에게 인사하고 말을 걸며 정보 수집하기!", val: "E" },
+          { text: "조용한 골목길을 거닐며 마을의 전체적인 분위기를 찬찬히 관찰하고 느끼기!", val: "I" }
+        ]
+      },
+      {
+        axis: "SN",
+        tag: "🔎 비밀 통로를 발견했을 때",
+        title: "오래된 나무 밑둥에서 수상한 구멍을 발견했다면 드는 생각은?",
+        options: [
+          { text: "“입구 크기가 두더지 굴 같네. 깊이가 얼마나 되는지 나뭇가지로 찔러보자.” 구체적 상태 파악", val: "S" },
+          { text: "“혹시 지하에 이상한 나라로 통하는 비밀 차원의 문이 열려 있는 건 아닐까?!” 숨겨진 의미 상상", val: "N" }
+        ]
+      },
+      {
+        axis: "TF",
+        tag: "🪑 친구의 무리한 부탁",
+        title: "내 의자가 너무 좁은데 친구가 계속 같이 앉자며 비집고 들어온다면?",
+        options: [
+          { text: "“의자가 1인용이라 둘이 앉으면 망가져. 저쪽 벤치로 가서 앉자.” 합리적인 대안을 제시한다.", val: "T" },
+          { text: "친구가 무안해할까 봐 거절을 못 하고 살짝 엉덩이를 걸친 채 불편을 감수한다.", val: "F" }
+        ]
+      },
+      {
+        axis: "JP",
+        tag: "🍲 단골 식당이 닫았을 때",
+        title: "기대하고 간 최애 그림책 카페가 오늘 갑자기 문을 닫았다면?",
+        options: [
+          { text: "미리 준비해 둔 플랜 B 카페 목록을 꺼내며 재빠르게 동선을 수정한다.", val: "J" },
+          { text: "“오히려 좋아! 이 골목 처음인데 발길 닿는 아무 가게나 들어가 볼까?”", val: "P" }
+        ]
+      }
+    ];
+  </script>
+
+  <script>
+    let currentQuestionIdx = 0;
+    let userAnswers = [];
+    let lastResultMBTI = null;
+
+    // Toast message function
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.remove('opacity-0', '-translate-y-3', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-3', 'pointer-events-none');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2500);
+    }
+
+    // 공통 이미지 소스 적용 함수
+    function applyCharacterImageSource(sourceUrl, sourceLabel = '사진') {
+      document.documentElement.style.setProperty('--ref-img', `url('${sourceUrl}')`);
+      
+      const uploadBtn = document.getElementById('btn-upload-text');
+      if (uploadBtn) uploadBtn.textContent = '사진 적용됨 ✨';
+
+      const statusBar = document.getElementById('image-status-bar');
+      if (statusBar) {
+        statusBar.innerHTML = `<span>✅ ${sourceLabel}이 성공적으로 반영되어 16개 캐릭터 전원에 자동 분할 적용되었습니다!</span>`;
+        statusBar.classList.remove('text-amber-900');
+        statusBar.classList.add('text-emerald-700', 'bg-emerald-50');
+      }
+
+      showToast(`${sourceLabel}이 적용되어 16가지 주인공 그림이 활성화되었습니다! 🎨`);
+    }
+
+    // 사진 교체/업로드 핸들러 (CSS 변수 --ref-img에 즉시 반영)
+    function handleUserImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        applyCharacterImageSource(event.target.result, '사진 파일');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 웹 이미지 URL 직접 입력 핸들러 (Imgur, GitHub 등 호스팅된 링크 등록 시 영구 자동 표시)
+    function promptImageUrl() {
+      const inputUrl = window.prompt(
+        "무료 호스팅(예: Imgur, Postimages 등)에 올린 이미지 주소(URL)를 입력해주세요:\n(입력 시 방문자 모두에게 별도 파일 첨부 없이 사진이 자동으로 표시됩니다)",
+        ""
+      );
+      if (inputUrl && inputUrl.trim().length > 0) {
+        applyCharacterImageSource(inputUrl.trim(), '웹 이미지 링크');
+      }
+    }
+
+    // 뷰 전환 네비게이션
+    function navigateView(viewName) {
+      document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+
+      if (viewName === 'home') {
+        document.getElementById('view-home').classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (viewName === 'test') {
+        document.getElementById('view-test').classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (viewName === 'result') {
+        if (!lastResultMBTI) {
+          showToast('아직 검사 결과가 없습니다. 먼저 검사를 시작해보세요! 🌱');
+          startTest();
+          return;
+        }
+        renderResult(lastResultMBTI);
+        document.getElementById('view-result').classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (viewName === 'all') {
+        renderCharacterGrid('ALL');
+        document.getElementById('view-all').classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    // 검사 시작
+    function startTest() {
+      currentQuestionIdx = 0;
+      userAnswers = [];
+      navigateView('test');
+      renderQuestion();
+    }
+
+    // 검사 결과 확인 버튼 클릭 시
+    function checkResultView() {
+      if (lastResultMBTI) {
+        navigateView('result');
+      } else {
+        showToast('아직 진행한 검사가 없습니다. 검사 화면으로 이동합니다! 🌱');
+        startTest();
+      }
+    }
+
+    // 검사 문항 렌더링
+    function renderQuestion() {
+      const q = QUESTIONS[currentQuestionIdx];
+      const total = QUESTIONS.length;
+      const progressPercent = Math.round(((currentQuestionIdx + 1) / total) * 100);
+
+      document.getElementById('test-progress-text').textContent = `문항 ${currentQuestionIdx + 1} / ${total}`;
+      document.getElementById('test-progress-percent').textContent = `${progressPercent}%`;
+      document.getElementById('test-progress-bar').style.width = `${progressPercent}%`;
+
+      document.getElementById('q-category-tag').textContent = q.tag;
+      document.getElementById('q-question-title').textContent = q.title;
+
+      const btnPrev = document.getElementById('btn-prev-question');
+      btnPrev.disabled = currentQuestionIdx === 0;
+
+      const optionsBox = document.getElementById('q-options-container');
+      optionsBox.innerHTML = '';
+
+      q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = "w-full p-4 md:p-5 rounded-2xl text-left bg-stone-50 hover:bg-amber-50 hover:border-amber-400 border-2 border-stone-200 text-stone-800 text-sm md:text-base font-medium transition duration-200 transform hover:-translate-y-0.5 shadow-sm flex items-start gap-3 active:scale-[0.98]";
+        
+        const badge = document.createElement('span');
+        badge.className = "inline-flex items-center justify-center w-6 h-6 rounded-full bg-white border border-stone-300 text-xs font-black shrink-0 text-stone-700 mt-0.5";
+        badge.textContent = idx === 0 ? 'A' : 'B';
+
+        const textSpan = document.createElement('span');
+        textSpan.className = "flex-1 leading-relaxed";
+        textSpan.textContent = opt.text;
+
+        btn.appendChild(badge);
+        btn.appendChild(textSpan);
+
+        btn.onclick = () => selectOption(opt.val);
+        optionsBox.appendChild(btn);
+      });
+    }
+
+    function selectOption(val) {
+      userAnswers[currentQuestionIdx] = val;
+
+      if (currentQuestionIdx < QUESTIONS.length - 1) {
+        currentQuestionIdx++;
+        renderQuestion();
+      } else {
+        calculateAndShowResult();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQuestionIdx > 0) {
+        currentQuestionIdx--;
+        renderQuestion();
+      }
+    }
+
+    // 결과 계산
+    function calculateAndShowResult() {
+      let counts = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+      userAnswers.forEach(choice => {
+        if (counts[choice] !== undefined) {
+          counts[choice]++;
+        }
+      });
+
+      const eOrI = counts.E >= counts.I ? 'E' : 'I';
+      const sOrN = counts.S >= counts.N ? 'S' : 'N';
+      const tOrF = counts.T >= counts.F ? 'T' : 'F';
+      const jOrP = counts.J >= counts.P ? 'J' : 'P';
+
+      const resultType = `${eOrI}${sOrN}${tOrF}${jOrP}`;
+      lastResultMBTI = resultType;
+
+      showToast(`당신과 꼭 닮은 그림책 주인공을 찾았습니다! ✨`);
+      navigateView('result');
+    }
+
+    // 검사 결과 화면 렌더링
+    function renderResult(mbti) {
+      const data = CHARACTERS[mbti] || CHARACTERS["INTJ"];
+
+      document.getElementById('res-badge-group').textContent = `${data.group} (${data.groupEng})`;
+      document.getElementById('res-char-name').textContent = data.name;
+      document.getElementById('res-mbti-type').textContent = mbti;
+      document.getElementById('res-char-title').textContent = data.role;
+
+      // 캐릭터 스프라이트 클래스 갱신
+      const spriteEl = document.getElementById('res-char-sprite');
+      spriteEl.className = `char-sprite sprite-${mbti} w-full h-full rounded-xl`;
+
+      document.getElementById('res-book-title').textContent = data.book;
+      document.getElementById('res-book-author').textContent = data.author;
+      document.getElementById('res-quote').textContent = `“${data.quote}”`;
+
+      // 설명 및 태그
+      document.getElementById('res-description').innerHTML = `<p>${data.summary}</p>`;
+      const tagsBox = document.getElementById('res-tags');
+      tagsBox.innerHTML = '';
+      data.tags.forEach(t => {
+        const span = document.createElement('span');
+        span.className = "text-xs px-2.5 py-1 rounded-full bg-stone-200/80 text-stone-700 font-bold";
+        span.textContent = `#${t}`;
+        tagsBox.appendChild(span);
+      });
+
+      // 찰떡궁합 짝꿍 캐릭터
+      const partnerData = CHARACTERS[data.partner];
+      const matchText = document.getElementById('res-match-text');
+      const matchSprite = document.getElementById('res-match-sprite');
+
+      if (partnerData) {
+        matchText.textContent = `${data.partner} (${partnerData.name})`;
+        matchSprite.className = `char-sprite sprite-${data.partner} w-full h-full rounded-lg`;
+      }
+    }
+
+    function showMatchDetail() {
+      const currentData = CHARACTERS[lastResultMBTI];
+      if (currentData && currentData.partner) {
+        openModal(currentData.partner);
+      }
+    }
+
+    // 결과 공유하기 (텍스트 복사)
+    function shareResult() {
+      const data = CHARACTERS[lastResultMBTI];
+      const shareText = `[그림책 MBTI] 나와 닮은 그림책 속 주인공은?\n👉 ${lastResultMBTI} : ${data.name} (${data.book})\n"${data.quote}"\n\n나와 닮은 그림책 주인공을 찾아보세요!`;
+      
+      const tempTextArea = document.createElement('textarea');
+      tempTextArea.value = shareText;
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      try {
+        document.execCommand('copy');
+        showToast('결과가 클립보드에 복사되었습니다! 📋');
+      } catch (err) {
+        showToast('복사에 실패했습니다.');
+      }
+      document.body.removeChild(tempTextArea);
+    }
+
+    // 16가지 도감 필터링
+    function filterGroup(groupName) {
+      document.querySelectorAll('.group-tab').forEach(btn => {
+        if (btn.dataset.group === groupName) {
+          btn.className = "group-tab active px-4 py-1.5 rounded-full text-xs md:text-sm font-bold transition bg-stone-800 text-white";
+        } else {
+          btn.className = "group-tab px-4 py-1.5 rounded-full text-xs md:text-sm font-bold transition bg-white text-stone-600 border border-stone-200 hover:bg-stone-50";
+        }
+      });
+      renderCharacterGrid(groupName);
+    }
+
+    // 16가지 도감 카드 렌더링
+    function renderCharacterGrid(filter) {
+      const grid = document.getElementById('character-grid');
+      grid.innerHTML = '';
+
+      Object.keys(CHARACTERS).forEach(mbti => {
+        const item = CHARACTERS[mbti];
+        if (filter !== 'ALL' && item.group !== filter) {
+          return;
+        }
+
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-2xl p-4 border border-book-border shadow-sm hover:shadow-paper transition duration-200 transform hover:-translate-y-1 cursor-pointer flex flex-col justify-between";
+        card.onclick = () => openModal(mbti);
+
+        let groupBadgeColor = "bg-indigo-100 text-indigo-800";
+        if (item.group === "외교형") groupBadgeColor = "bg-emerald-100 text-emerald-800";
+        if (item.group === "관리자형") groupBadgeColor = "bg-blue-100 text-blue-800";
+        if (item.group === "탐험가형") groupBadgeColor = "bg-amber-100 text-amber-800";
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${groupBadgeColor}">
+                ${item.group}
+              </span>
+              <span class="text-xs font-black text-book-point bg-orange-50 px-2 py-0.5 rounded border border-orange-200">
+                ${mbti}
+              </span>
+            </div>
+            <!-- 사진에서 잘라낸 캐릭터 그림 -->
+            <div class="w-24 h-24 mx-auto my-2 rounded-xl border border-amber-200/80 bg-stone-50 overflow-hidden shadow-inner">
+              <div class="char-sprite sprite-${mbti} w-full h-full"></div>
+            </div>
+            <h4 class="font-bold text-book-brown text-center text-sm md:text-base leading-tight mb-1">
+              ${item.name}
+            </h4>
+            <p class="text-[11px] text-stone-500 text-center line-clamp-1 mb-2">
+              ${item.book}
+            </p>
+          </div>
+          <div class="pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-400">
+            <span>${item.role}</span>
+            <span class="text-amber-600 font-bold">자세히 보기 →</span>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    // 모달 열기
+    function openModal(mbti) {
+      const data = CHARACTERS[mbti];
+      if (!data) return;
+
+      document.getElementById('modal-group').textContent = `${data.group} (${data.groupEng})`;
+      
+      const modalSprite = document.getElementById('modal-sprite');
+      modalSprite.className = `char-sprite sprite-${mbti} w-full h-full rounded-xl`;
+
+      document.getElementById('modal-name').textContent = data.name;
+      document.getElementById('modal-mbti').textContent = mbti;
+      document.getElementById('modal-role').textContent = data.role;
+
+      document.getElementById('modal-book').textContent = data.book;
+      document.getElementById('modal-author').textContent = data.author;
+      document.getElementById('modal-quote').textContent = `“${data.quote}”`;
+      document.getElementById('modal-desc').textContent = data.summary;
+
+      const tagsBox = document.getElementById('modal-tags');
+      tagsBox.innerHTML = '';
+      data.tags.forEach(t => {
+        const span = document.createElement('span');
+        span.className = "text-xs px-2.5 py-0.5 rounded-full bg-stone-200/80 text-stone-700 font-medium";
+        span.textContent = `#${t}`;
+        tagsBox.appendChild(span);
+      });
+
+      const modal = document.getElementById('char-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('char-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // 모달 닫기 이벤트
+    document.getElementById('char-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCharacterGrid('ALL');
+    });
+  </script>
+</body>
+</html>
