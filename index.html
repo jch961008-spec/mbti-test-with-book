@@ -4,6 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>나는 어떤 주인공과 닮았을까? - 그림책 MBTI</title>
+
+  <!-- 웹앱(PWA) 및 홈화면 바로가기 아이콘 설정 -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#E76245">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="그림책 MBTI">
+
+  <!-- iOS(아이폰/아이패드) 홈화면에 추가 시 나타나는 아이콘 -->
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <!-- 일반 브라우저 탭 파비콘 -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icon-192.png">
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts for warm picture-book aesthetic -->
@@ -220,6 +235,11 @@
           <span>📚</span>
           <span>다른 유형 확인하기</span>
         </button>
+      </div>
+
+      <!-- 시작 페이지 하단 출처 표기 -->
+      <div class="mt-8 text-[11px] text-stone-400 font-medium tracking-wide">
+        &lt;출처 : 라키비움롤리팝&gt;
       </div>
     </section>
 
